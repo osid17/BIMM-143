@@ -1,0 +1,284 @@
+---
+title: "Class 13: Transcriptomics and RNA-Seq Analysis"
+author: "Your Name"
+format: pdf
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Setup
+
+```{r}
+library(DESeq2)
+library(ggplot2)
+library(dplyr)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+```
+
+## Import Data
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <- read.csv("airway_metadata.csv")
+head(counts)
+head(metadata)
+```
+
+## Q1. How many genes are in this dataset?
+
+```{r}
+nrow(counts)
+```
+
+There are `r nrow(counts)` genes in this dataset.
+
+## Q2. How many 'control' cell lines do we have?
+
+```{r}
+sum(metadata$dex == "control")
+```
+
+There are `r sum(metadata$dex == "control")` control cell lines.
+
+## Toy Differential Gene Expression
+
+```{r}
+control <- metadata[metadata[,"dex"]=="control",]
+control.counts <- counts[, control$id]
+control.mean <- rowSums(control.counts) / nrow(control)
+head(control.mean)
+```
+
+## Q3. How would you make the above code more robust?
+
+```{r}
+control <- metadata[metadata[,"dex"]=="control",]
+control.counts <- counts[, control$id]
+control.mean <- rowSums(control.counts) / nrow(control)
+head(control.mean)
+```
+
+Instead of hardcoding `/4` we use `nrow(control)` to automatically count the number of control samples. This makes the code more robust if the number of samples changes.
+
+## Q4. Calculate the mean per gene for treated samples
+
+```{r}
+treated <- metadata[metadata[,"dex"]=="treated",]
+treated.counts <- counts[, treated$id]
+treated.mean <- rowSums(treated.counts) / nrow(treated)
+head(treated.mean)
+```
+
+## Q5. Scatter plot of control vs treated means
+
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+
+plot(meancounts[,1], meancounts[,2],
+     xlab="Control Mean",
+     ylab="Treated Mean",
+     main="Control vs Treated Mean Counts")
+```
+
+```{r}
+ggplot(meancounts, aes(x=control.mean, y=treated.mean)) +
+  geom_point(alpha=0.3) +
+  xlab("Control Mean") +
+  ylab("Treated Mean") +
+  ggtitle("Control vs Treated Mean Counts")
+```
+
+For Q5b I would use `geom_point()` for this scatter plot.
+
+## Q6. Plot both axes on a log scale
+
+```{r}
+plot(meancounts[,1], meancounts[,2],
+     xlab="Control Mean",
+     ylab="Treated Mean",
+     log="xy",
+     main="Control vs Treated (log scale)")
+```
+
+The argument `log="xy"` in the base R `plot()` function sets both axes to log scale. Using log scale reveals the spread of lowly expressed genes that were all clustered near the origin in the original plot.
+
+## Log2 Fold Change
+
+```{r}
+meancounts$log2fc <- log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+head(meancounts)
+```
+
+## Q7. Purpose of arr.ind argument in which()
+
+```{r}
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+to.rm <- unique(zero.vals[,1])
+mycounts <- meancounts[-to.rm,]
+head(mycounts)
+```
+
+The `arr.ind=TRUE` argument causes `which()` to return both the row AND column indices of TRUE values, rather than just a single element position number. This is important because we are checking a 2-column data frame for zeros and need to know which rows contain zeros. We take the first column (row indices) and call `unique()` to avoid trying to remove the same row twice in case a gene has zeros in both the control and treated columns.
+
+## Q8. How many up-regulated genes at log2FC > 2?
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+sum(up.ind)
+```
+
+There are `r sum(up.ind)` up-regulated genes at a log2 fold change greater than 2.
+
+## Q9. How many down-regulated genes at log2FC < -2?
+
+```{r}
+down.ind <- mycounts$log2fc < (-2)
+sum(down.ind)
+```
+
+There are `r sum(down.ind)` down-regulated genes at a log2 fold change less than -2.
+
+## Q10. Do you trust these results?
+
+No, these results should not be fully trusted. While we can see large fold changes, we have not performed any statistical testing to determine whether these differences are significant. We have no p-values or adjusted p-values, and we have not accounted for variability between replicates. A proper differential expression analysis using DESeq2 is needed.
+
+## Setting Up DESeq2
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData=counts,
+                              colData=metadata,
+                              design=~dex)
+dds
+```
+
+## Principal Component Analysis (PCA)
+
+```{r}
+vsd <- vst(dds, blind=FALSE)
+plotPCA(vsd, intgroup=c("dex"))
+```
+
+```{r}
+pcaData <- plotPCA(vsd, intgroup=c("dex"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+ggplot(pcaData) +
+  aes(x=PC1, y=PC2, color=dex) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  coord_fixed() +
+  theme_bw()
+```
+
+## DESeq Analysis
+
+```{r}
+dds <- DESeq(dds)
+res <- results(dds)
+res
+```
+
+```{r}
+summary(res)
+```
+
+```{r}
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+```
+
+## Q11. Adding Annotation Data
+
+```{r}
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res),
+                     keytype="ENSEMBL",
+                     column="SYMBOL",
+                     multiVals="first")
+
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res),
+                     keytype="ENSEMBL",
+                     column="ENTREZID",
+                     multiVals="first")
+
+res$uniprot <- mapIds(org.Hs.eg.db,
+                      keys=row.names(res),
+                      keytype="ENSEMBL",
+                      column="UNIPROT",
+                      multiVals="first")
+
+res$genename <- mapIds(org.Hs.eg.db,
+                       keys=row.names(res),
+                       keytype="ENSEMBL",
+                       column="GENENAME",
+                       multiVals="first")
+
+head(res)
+ord <- order(res$padj)
+head(res[ord,])
+write.csv(res[ord,], "deseq_results.csv")
+```
+
+## Volcano Plots
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj),
+     xlab="Log2(FoldChange)",
+     ylab="-Log(P-value)")
+```
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj),
+     ylab="-Log(P-value)", xlab="Log2(FoldChange)")
+abline(v=c(-2,2), col="darkgray", lty=2)
+abline(h=-log(0.05), col="darkgray", lty=2)
+```
+
+```{r}
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2)
+mycols[ inds ] <- "blue"
+
+plot(res$log2FoldChange, -log(res$padj),
+     col=mycols, ylab="-Log(P-value)", xlab="Log2(FoldChange)")
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.1), col="gray", lty=2)
+```
+
+## Q12. Pathway Analysis - Top 2 Down-regulated Pathways
+
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+
+data(kegg.sets.hs)
+
+foldchanges <- res$log2FoldChange
+names(foldchanges) <- res$entrez
+
+keggres <- gage(foldchanges, gsets=kegg.sets.hs)
+head(keggres$less, 3)
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa05332")
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa04940")
+```
+
+The top 2 down-regulated KEGG pathways are Graft-versus-host disease (hsa05332) and Type I diabetes mellitus (hsa04940). Both are immune-related pathways, consistent with the known anti-inflammatory effects of dexamethasone.
+
+## Session Information
+
+```{r}
+sessionInfo()
+```

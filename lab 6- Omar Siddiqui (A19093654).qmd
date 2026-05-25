@@ -1,0 +1,170 @@
+---
+title: "Class 6 : R functions"
+author: "Omar (PID: A19093654)"
+format: pdf
+toc: true
+editor: visual
+---
+
+## Background
+
+All functions in R have at least 3 things:
+
+-   a *name* (we picked that and use it to call the function)
+-   input *arguments* (one or more commas separated inputs that go inside the brackets when we call the function
+-   the *body* (the lines of R code that do work of the function)
+
+## A first function
+
+Here we will create a new function to add some numbers. Let's call it 'add()'
+
+Input arguments can be either "required" or "optional", the latter have fall back default values that will be used if the user doesn't specify them.
+
+' ' '\[r\] add \<- function(x, y) { x + y }
+
+## Q1A:
+
+```{r}
+add <- function (x, y=1000) {
+  x + y
+}
+```
+
+Can we use our new function
+
+```{r}
+add(10, 100)
+```
+
+## Q1B:
+
+```{r}
+add = function(x, y=0) {
+ sum(x,y)
+}
+```
+
+We can explicitly set a **return** value output from a fnuction (rather than the default last line) by using the 'return()' function.
+
+## Q2
+
+## A useful function here is that "base R" 'sample()' function:
+
+```{r}
+# 1. Background check
+sample(1:5, size=3)
+
+# 2. DEFINE the basic function here so R knows what it is
+generate_dna <- function(len = 10) { 
+  sample(x = c("A", "C", "G", "T"), size = len, replace = TRUE) 
+}
+
+# 3. Now it is safe to CALL the function
+generate_dna(len=100)
+```
+
+We can use this to make a random nucleotide sequence if we draw from "A", "C", "G", and "T".
+
+```{r}
+generate_dna(len=100)
+```
+
+## Q2A:
+
+# Defining the function before calling it
+
+```{r}
+generate_dna <- function(len = 10) { sample(x = c("A", "C", "G", "T"), size = len, replace = TRUE) }
+
+generate_dna(len=10)
+```
+
+```{r}
+# Since we defined it above, this call works now
+generate_dna(len=10)
+```
+
+## what was wrong was that the size and len weren't linked up (=).
+
+## Q2b:
+
+```{r}
+generate_dna <- function(len = 10, single.element = FALSE) {
+  ans <- sample(x = c("A", "C", "G", "T"), size = len, replace = TRUE)
+  
+  if (single.element == TRUE) {
+    ans <- paste(ans, collapse = "")
+  }
+  return(ans)
+}
+
+# Test the new argument
+generate_dna(len = 10, single.element = TRUE)
+```
+
+Functions that might help you are 'paste()', 'if()', 'cat()', and 'return()'.
+
+## Q2c:
+
+```{r}
+generate_dna_fasta <- function(len = 10) {
+  ans <- sample(x = c("A", "C", "G", "T"), size = len, replace = TRUE)
+  seq <- paste(ans, collapse = "")
+  
+  # cat() combined with \n prints the required FASTA lines [cite: 420]
+  cat(">len", len, "\n", seq, "\n", sep="")
+}
+
+# Example of the final behavior
+generate_dna_fasta(9)
+```
+
+## Q3:
+
+```{r}
+generate_protein <- function(len = 6) {
+  amino_acids <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", 
+                   "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V")
+  
+  raw_sequence <- sample(x = amino_acids, size = len, replace = TRUE)
+  protein_string <- paste(raw_sequence, collapse = "")
+  
+  return(protein_string)
+}
+
+generate_protein(6)
+```
+
+## Q4:
+
+```{r}
+for (i in 6:13) {
+  protein_seq <- generate_protein(i)
+  cat(">id.", i, "\n", protein_seq, "\n", sep = "")
+}
+```
+
+## Q5:
+
+| legnth | best hit % identity | best hit % coverage | unique? (y/n) |
+|--------|---------------------|---------------------|---------------|
+| 6      | 100                 | 100                 | N             |
+| 7      | 100                 | 100                 | N             |
+| 8      | 100                 | 88                  | Y             |
+| 9      | 100                 | 89                  | Y             |
+| 10     | 100                 | 80                  | Y             |
+| 11     | 100                 | 89                  | Y             |
+| 12     | 81                  | 92                  | Y             |
+| 13     | 90                  | 85                  | Y             |
+
+## Q5A: My generated peptides start looking "unique in nature" at a sequence length of 8 amino acids. This is the first point in the table where a hit fails to meet the definition of 100% identity and 100% coverage.
+
+## Q5B: Short random peptides are almost always found in the nr database because the sequence space (20\^L) is significantly smaller than the known protein universe . For a peptide of length 6, there are only around 64 million (20\^6) possible combinations, making chance matches likely. As L increases, the sequence space grows exponentially, making it statistically improbable for a random sequence to match an existing natural protein.
+
+```{r}
+cat("hello \n there")
+```
+
+## Q6:
+
+Based on the data from Q5, the minimum length for MHC class II peptide presentation is likely around 8 or 9 amino acids. My results show that peptides of length 6 and 7 are not unique in nature, meaning they match existing proteins with 100% identity and coverage. If the immune system presented very short peptides, it would be a bad design choice because these sequences are so common that the system could not reliably distinguish between "self" and "non-self" pathogens. This lack of specificity would likely lead to autoimmune attacks on the body's own tissues. By requiring longer peptides, where the sequence space (20\^L) is much larger, the immune system ensures the peptides are unique enough to trigger an accurate immune response.

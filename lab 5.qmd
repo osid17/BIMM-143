@@ -1,0 +1,79 @@
+---
+title: "Lab 5: Data Exploration and Visualization in R"
+author: "Mohammad Omar Siddiqui"
+format: pdf
+---
+
+## Setup and Package Installation
+
+Before plotting, we need to ensure our packages are installed and loaded. 
+
+```{r setup, message=FALSE}
+# install.packages("ggplot2")
+# install.packages("gapminder")
+# install.packages("dplyr")
+
+library(ggplot2)
+```
+
+## Basic Scatter Plots with built-in data
+
+First, we will visualize the built-in `cars` dataset. 
+
+```{r cars-plot}
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point()
+```
+
+Now, we add a trendline to see the relationship more clearly.
+
+```{r cars-multi-geom}
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+## Reading External Data and Customizing Plots
+
+Next, we will load a gene expression dataset to see how drugs affect specific cell lines.
+
+```{r read-data}
+url <- "[https://bioboot.github.io/bimm143_S26/class-material/up_down_expression.txt](https://bioboot.github.io/bimm143_S26/class-material/up_down_expression.txt)"
+genes <- read.delim(url)
+head(genes)
+
+Now we plot this data and customize the colors based on whether the genes are upregulated, downregulated, or unchanging.
+
+```{r custom-plot}
+ggplot(genes, aes(x = Condition1, y = Condition2, col = State)) +
+  geom_point() +
+  scale_color_manual(values = c("blue", "gray", "red")) +
+  labs(title = "Gene Expression Changes Upon Drug Treatment",
+       subtitle = "Scatter plot of Condition 1 vs Condition 2",
+       x = "Control (No Drug)",
+       y = "Drug Treatment",
+       color = "Expression State") +
+  theme_minimal()
+```
+
+## Exploring Gapminder and Flipping Bar Charts
+
+Finally, we bring in the dataset charting global population, wealth, and life expectancy.
+
+```{r gapminder-data}
+library(gapminder)
+library(dplyr)
+
+gapminder_americas <- gapminder %>%
+  filter(year == 2007, continent == "Americas")
+```
+
+```{r bar-plot}
+ggplot(gapminder_americas, aes(x = reorder(country, lifeExp), y = lifeExp)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() + 
+  labs(title = "Life Expectancy in the Americas (2007)",
+       x = "Country",
+       y = "Life Expectancy (Years)") +
+  theme_minimal()
+```

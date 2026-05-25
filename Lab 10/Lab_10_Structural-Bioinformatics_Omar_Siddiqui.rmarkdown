@@ -1,0 +1,260 @@
+---
+title: "Lab 10: Structural Bioinformatics"
+author: "Omar Siddiqui"
+format: pdf
+---
+
+## 2. Introduction to the RCSB Protein Data Bank (PDB)
+
+```{r}
+# Read in the PDB statistics CSV file
+# This file was downloaded from rcsb.org and contains counts of structures
+# broken down by molecular type and experimental method
+pdb_stats <- read.csv("pdb_stats.csv", row.names = 1)
+pdb_stats
+```
+
+## Q1: What percentage of structures are solved by X-Ray and EM?
+
+```{r}
+# The numbers in the CSV have commas (e.g. "178,795") which R reads as text
+# We need to remove the commas and convert to actual numbers before doing math
+# apply() runs the same function across all columns (2 = columns, 1 = rows)
+pdb_stats_clean <- apply(pdb_stats, 2, function(x) as.numeric(gsub(",", "", x)))
+rownames(pdb_stats_clean) <- rownames(pdb_stats)
+
+# Sum up all X-ray and EM structures across all molecular types
+total_xray <- sum(pdb_stats_clean[, "X.ray"])
+total_em <- sum(pdb_stats_clean[, "EM"])
+
+# Grand total of ALL structures in the PDB
+grand_total <- sum(pdb_stats_clean[, "Total"])
+
+# Calculate percentages by dividing method total by grand total
+xray_pct <- round((total_xray / grand_total) * 100, 2)
+em_pct <- round((total_em / grand_total) * 100, 2)
+
+cat("X-ray percentage:", xray_pct, "%\n")
+cat("EM percentage:", em_pct, "%\n")
+cat("Combined X-ray + EM:", round(xray_pct + em_pct, 2), "%\n")
+```
+
+**Q1 Answer:** X-ray crystallography accounts for `r xray_pct`% and Electron Microscopy (EM) accounts for `r em_pct`% of PDB structures, for a combined total of `r round(xray_pct + em_pct, 2)`%. X-ray crystallography has historically been the dominant method for determining protein structures, though EM has grown rapidly in recent years due to advances in detector technology (the "resolution revolution").
+
+## Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+# Extract just the protein-only total and divide by the grand total
+# This tells us what fraction of ALL PDB structures are purely protein
+protein_total <- as.numeric(gsub(",", "", pdb_stats["Protein (only)", "Total"]))
+protein_pct <- round((protein_total / grand_total) * 100, 2)
+
+cat("Protein only percentage:", protein_pct, "%\n")
+```
+
+**Q2 Answer:** `r protein_pct`% of structures in the PDB are protein only. This makes sense as proteins are the main workhorses of the cell and understanding their 3D structure is critical for understanding their function and designing drugs that target them.
+
+## Q3: How many HIV-1 protease structures are in the PDB?
+
+**Q3 Answer:** Searching "HIV" on rcsb.org returns 4,998 structures total. 
+Filtering more specifically for "HIV-1 protease" returns 38 structures.
+HIV protease is heavily studied because it is essential for viral replication —
+drugs that block this enzyme are a key part of HIV treatment.
+
+## 4. Introduction to Bio3D in R
+
+```{r}
+# Bio3D is an R package specifically designed for structural bioinformatics
+# It lets us read, write, and analyze protein structure data directly in R
+# without needing to use separate molecular visualization software for everything
+library(bio3d)
+```
+
+```{r}
+# read.pdb() can read a PDB file either from your local computer OR
+# directly from the online PDB database using just the 4-letter PDB ID
+# Here we read the HIV-1 protease structure with bound drug indinavir
+pdb <- read.pdb("1hsg")
+
+# Printing the pdb object gives us a useful summary of what's in the structure
+pdb
+```
+
+**Q7 Answer:** There are 198 amino acid residues in this pdb object (shown as Calpha atoms in the summary). Note that the structure has 2 chains (A and B) each with 99 residues since HIV protease is a homodimer — two identical chains that come together to form the active enzyme.
+
+**Q8 Answer:** The two non-protein residues are HOH (water molecules, 127 of them) and MK1 (the drug molecule indinavir, 1 of it). MK1 is sitting in the active site where the enzyme normally cuts viral proteins.
+
+**Q9 Answer:** There are 2 protein chains (A and B) in this structure.
+
+```{r}
+# We can access specific parts of the pdb object using the $ operator
+# pdb$atom contains all the atomic coordinates and properties
+# Each row is one atom with its x,y,z position and other info
+head(pdb$atom)
+```
+
+## Q4: Why do we see just one atom per water molecule?
+
+**Q4 Answer:** Water molecules normally have 3 atoms (1 oxygen + 2 hydrogens). However, hydrogen atoms are extremely small and don't scatter X-rays well enough to be detected in X-ray crystallography. Only the oxygen atom of each water molecule is visible, so each water appears as a single atom in the structure.
+
+## Q5: Critical conserved water molecule
+
+**Q5 Answer:** The critical conserved water molecule is HOH 308. This water molecule sits in the binding site and forms hydrogen bonds that bridge the two catalytic Asp 25 residues (one from each chain) and the drug molecule. It plays a crucial structural role — without it, the drug cannot bind as tightly. This is why it is "conserved" across many HIV protease structures.
+
+## Q6: Figure of HIV protease chains and ligand
+# (Insert your saved Mol* image here showing both chains, the ligand MK1,
+# the catalytic ASP 25 residues highlighted, and the conserved water HOH 308)
+# The two chains are shown in different colors to distinguish them,
+# with the drug indinavir shown in spacefill representation in the binding site.
+
+## Predicting functional motions with Normal Mode Analysis
+
+```{r}
+# Read in the Adenylate Kinase (ADK) structure
+# ADK is an enzyme that transfers phosphate groups between nucleotides
+# It undergoes large conformational changes (shape changes) when it binds substrates
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+# Normal Mode Analysis (NMA) is a computational method to predict
+# the natural "breathing" motions of a protein based on its structure
+# It treats the protein like a network of springs connecting atoms
+# The lowest frequency modes correspond to the largest scale motions
+# which are often the biologically relevant conformational changes
+m <- nma(adk)
+
+# This plot shows the flexibility of each residue
+# Peaks = flexible regions, valleys = rigid regions
+plot(m)
+```
+
+```{r}
+# mktrj() generates a "trajectory" file showing the protein moving
+# along the predicted normal mode - like a movie of the motion
+# We can open this file in Mol* to visualize how the protein moves
+mktrj(m, file="adk_m7.pdb")
+```
+
+## 5. Comparative Structure Analysis of Adenylate Kinase
+
+**Q10 Answer:** The `msa` package is found only on BioConductor and not CRAN. BioConductor specializes in bioinformatics packages.
+
+**Q11 Answer:** `bio3dview` is not found on BioConductor or CRAN — it is only available on GitHub and must be installed using remotes::install_github().
+
+**Q12 Answer:** FALSE. The `pak` package can install from GitHub, but the question refers specifically to the `devtools` package functions (devtools::install_github() and devtools::install_bitbucket()).
+
+```{r}
+# get.seq() fetches a protein sequence from the PDB database
+# Here we get chain A of adenylate kinase structure 1AKE
+# We will use this sequence to search for similar structures using BLAST
+aa <- get.seq("1ake_A")
+aa
+```
+
+**Q13 Answer:** This sequence is 214 amino acids long.
+
+```{r}
+# Instead of running BLAST (which can time out with many users),
+# we use a pre-defined list of related ADK structures identified by BLAST
+# These are all adenylate kinase structures from various bacterial species
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A',
+                 '5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A',
+                 '4K46_A','3GMT_A','4PZL_A')
+
+# get.pdb() downloads all 13 related PDB files at once
+# split=TRUE splits each file into individual chains
+# gzip=TRUE compresses the files to save disk space
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+```{r}
+#| cache: true
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+
+```{r}
+# pdb.annotate() looks up metadata about each structure in our collection
+# Here we use it to find out which species each structure came from
+# This will help us interpret the PCA results later
+ids <- basename.pdb(pdbs$id)
+anno <- pdb.annotate(ids)
+unique(anno$source)
+# Note: most structures are from E. coli, but a few are from other bacteria
+# This makes sense as ADK is a highly conserved enzyme found in all living things
+```
+
+```{r}
+# PCA on protein structures works similarly to PCA on any other data
+# Instead of gene expression values or candy properties, our "variables"
+# are the x,y,z coordinates of each atom across all structures
+# PC1 will capture the direction of greatest structural variation
+# which often corresponds to the main functional motion of the protein
+pc.xray <- pca(pdbs)
+
+# This plot shows how much variance each PC explains
+# A big drop after PC1 means most variation is captured in one motion
+plot(pc.xray)
+```
+
+```{r}
+# RMSD = Root Mean Square Deviation
+# It measures how different two structures are from each other
+# Small RMSD = similar structures, large RMSD = different structures
+# We calculate ALL pairwise RMSDs to see which structures are most similar
+rd <- rmsd(pdbs)
+
+# Hierarchical clustering groups similar structures together
+# cutree() cuts the resulting tree into 3 groups (k=3)
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k=3)
+
+# Color the PCA plot by cluster to see which structures group together
+# Structures in the same cluster have similar overall conformations
+plot(pc.xray, 1:2, col="grey50", bg=grps.rd, pch=21, cex=1)
+```
+
+```{r}
+# mktrj() generates a trajectory along PC1 - the direction of most variation
+# This shows us the main conformational change across all ADK structures
+# We can open pc_1.pdb in Mol* to watch the protein "move" between states
+pc1 <- mktrj(pc.xray, pc=1, file="pc_1.pdb")
+
+# Make a nicer labeled version of the PCA plot with ggplot2
+library(ggplot2)
+library(ggrepel)
+
+df <- data.frame(PC1=pc.xray$z[,1], 
+                 PC2=pc.xray$z[,2], 
+                 col=as.factor(grps.rd),
+                 ids=ids)
+
+p <- ggplot(df) + 
+  aes(PC1, PC2, col=col, label=ids) +
+  geom_point(size=2) +
+  geom_text_repel(max.overlaps = 20) +
+  theme(legend.position = "none")
+p
+# Each dot is one ADK structure - dots close together have similar conformations
+# The spread along PC1 represents the open-to-closed conformational change
+# that ADK undergoes when it binds its substrate
+```
+
+## 6. Normal Mode Analysis of all ADK structures
+
+```{r}
+#| cache: true
+modes <- nma(pdbs)
+plot(modes, pdbs, col=grps.rd)
+```
+
+**Q14 Answer:** The black (average) and colored (individual structure) lines show both similar and different patterns. They are most similar in the rigid core regions of the protein. They differ most in two regions: the LID domain (around residues 120-160) and the AMPbind domain (around residues 30-60). These are exactly the regions that move when ADK binds its substrates — they close down around the nucleotides like a clamp. The fact that different crystal structures show different flexibility in these regions makes sense because some structures are caught in the "open" state and others in the "closed" state.
+
+```{r}
+# Always good practice to end with sessionInfo() which records
+# exactly which versions of R and all packages were used
+# This makes your analysis reproducible by others
+sessionInfo()
+```
