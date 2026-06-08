@@ -1,7 +1,7 @@
 ---
 title: "Lab 10: Structural Bioinformatics"
 author: "Omar Siddiqui"
-format: pdf
+format: gfm
 ---
 
 ## 2. Introduction to the RCSB Protein Data Bank (PDB)
