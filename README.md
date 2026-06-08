@@ -7,7 +7,7 @@ Author: Omar Siddiqui
 
 - Class 05: [Data Visualization with ggplot2](<Class 5_ Data Visualization with ggplot2 - lab05.pdf>)
 - Class 06: [R Functions](<Class 6 _ R functions - lab-6--Omar-Siddiqui--A19093654.pdf>)
-- Class 07: [Principal Component Analysis (PCA)](<class 07 - Principal Component Analysis (PCA) - class-07-lab-7--Omar-Siddiqui-.pdf>)
+- Class 07: [Principal Component Analysis (PCA)](<class 07 lab 7 (Omar Siddiqui).md>)
 - Class 08: [Unsupervised Learning Mini-Project (Breast Cancer)](<class-08-mini-project---Omar-Siddiqui.pdf>)
 - Class 09: [Halloween Candy Mini-Project](<Class 9 Candy Mini-Project>)
 - Class 10: [Structural Bioinformatics](<Lab 10_ Structural Bioinformatics - Omar Siddiqui (PID- A19093654).pdf>)
