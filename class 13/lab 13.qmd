@@ -1,7 +1,7 @@
 ---
 title: "Class 13: Transcriptomics and RNA-Seq Analysis"
 author: "Your Name"
-format: pdf
+format: gfm
 execute:
   echo: true
   warning: false
