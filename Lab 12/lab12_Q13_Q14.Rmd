@@ -2,7 +2,7 @@
 title: "Lab 12 Section 4: Population Scale Analysis"
 author: "Omar Siddiqui"
 date: 11 May 2026
-output: pdf_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
