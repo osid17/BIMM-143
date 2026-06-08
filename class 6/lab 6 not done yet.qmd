@@ -10,9 +10,9 @@ editor: visual
 
 All functions in R have at least 3 things:
 
--   a *name* (we picked that and use it to call the function)
--   input *arguments* (one or more commas separated inputs that go inside the brackets when we call the function
--   the *body* (the lines of R code that do work of the function)
+- a *name* (we picked that and use it to call the function)
+- input *arguments* (one or more commas separated inputs that go inside the brackets when we call the function
+- the *body* (the lines of R code that do work of the function)
 
 ## A first function
 
