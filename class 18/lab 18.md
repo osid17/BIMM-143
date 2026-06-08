@@ -1,0 +1,28 @@
+# Lab 18 Mini-Project: Pertussis and the CMI-PB Project
+Omar Siddiqui
+2026-05-31
+
+## 1. Investigating Pertussis Cases by Year
+
+**Q1. Assign the CDC pertussis case number data to a data frame called
+cdc and use ggplot to make a plot of cases numbers over time.**
+
+We load the CDC data from the downloaded CSV file, clean the commas from
+the case numbers using the required adjustments from the instructor
+announcement, and plot the cases over time.
+
+\#\| message: false \#\| warning: false library(ggplot2)
+
+# Load the data
+
+cdc \<- read.csv(“pertussis_data.csv”)
+
+# Clean the commas using the sub instructor’s exact code
+
+cdc$Number.of.Reported.Pertussis.Cases <- as.numeric(gsub("," , "" , cdc$Number.of.Reported.Pertussis.Cases))
+
+# Q1 Plot: Cases over time
+
+ggplot(cdc, aes(x = Year, y = Number.of.Reported.Pertussis.Cases)) +
+geom_point() + geom_line() + labs(title = “Pertussis Cases by Year
+(1922-2025)”, y = “Number of Cases”, x = “Year”) + theme_bw()

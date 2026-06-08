@@ -1,7 +1,7 @@
 ---
 title: "Lab 5: Data Exploration and Visualization in R"
 author: "Mohammad Omar Siddiqui"
-format: pdf
+format: gfm
 ---
 
 ## Setup and Package Installation

@@ -2,7 +2,7 @@
 title: "Lab 18 Mini-Project: Pertussis and the CMI-PB Project"
 author: "Omar Siddiqui"
 date: "May 31, 2026"
-format: pdf
+format: gfm
 ---
 
 ## 1. Investigating Pertussis Cases by Year

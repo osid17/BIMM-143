@@ -1,7 +1,7 @@
 ---
 title: "Lab 11: Protein Structure Prediction"
 author: "Omar Siddiqui"
-format: pdf
+format: gfm
 execute:
   echo: true
 ---
@@ -12,7 +12,7 @@ library(bio3d)
 library(pheatmap)
 library(jsonlite)
 
-setwd("/Users/omar/BIMM143/Lab 11")
+setwd("/Users/omar/BIMM-143/Lab 11")
 ```
 
 
