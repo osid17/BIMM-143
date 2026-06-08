@@ -36,15 +36,22 @@ ggplot(cars, aes(x = speed, y = dist)) +
 ## Reading External Data and Customizing Plots
 
 Next, we will load a gene expression dataset to see how drugs affect specific cell lines.
-
-```{r read-data}
-url <- "[https://bioboot.github.io/bimm143_S26/class-material/up_down_expression.txt](https://bioboot.github.io/bimm143_S26/class-material/up_down_expression.txt)"
+````{r read-data}
+url <- "https://bioboot.github.io/bimm143_S26/class-material/up_down_expression.txt"
 genes <- read.delim(url)
 head(genes)
+````
 
 Now we plot this data and customize the colors based on whether the genes are upregulated, downregulated, or unchanging.
 
-```{r custom-plot}
+````{r custom-plot}
+````
+
+Then save and Render. That should give you `lab 5.md`.
+
+**Lab 11:** leave it as the PDF link. It needs AlphaFold data files that aren't in your clone, so it's not worth the hassle — a PDF for one lab is totally fine.
+
+Once Lab 5 renders, you'll have basically everything in markdown. Then run that `find . -name "*.md"` command in the Terminal and paste me the output — I'll build your final README with all the correct links in one go.
 ggplot(genes, aes(x = Condition1, y = Condition2, col = State)) +
   geom_point() +
   scale_color_manual(values = c("blue", "gray", "red")) +

@@ -19,7 +19,7 @@ setwd("/Users/omar/BIMM-143/Lab 11")
 ## Loading AlphaFold Results
 
 ```{r}
-results_dir <- "/Users/omar/BIMM143/Lab 11/hivprdimer_23119/"
+results_dir <- "/Users/omar/BIMM-143/Lab 11/hivprdimer_23119/"
 
 pdb_files <- list.files(path=results_dir,
                         pattern="*.pdb",
