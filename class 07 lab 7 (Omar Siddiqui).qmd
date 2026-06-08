@@ -1,10 +1,9 @@
 ---
 title: "class 07 - Principal Component Analysis (PCA)"
 author: "Omar Siddiqui (PID: A19093654)"
-format: pdf
+format: gfm
 editor: visual
 ---
-
 
 ## Overview
 
@@ -17,7 +16,7 @@ PCA = **Principal Component Analysis** — reduces high-dimensional data into fe
 
 > **Key idea:** We're not losing data, we're *summarizing* it. PCA is unsupervised — no group labels needed.
 
----
+------------------------------------------------------------------------
 
 # Section 1: PCA of UK Food Data
 
@@ -29,7 +28,7 @@ Dataset from UK DEFRA: consumption (g/person/week) of 17 food types across Engla
 - Countries = observations, foods = variables
 - Equivalent to samples vs. genes in RNA-seq
 
----
+------------------------------------------------------------------------
 
 ## Data Import
 
@@ -38,7 +37,7 @@ url <- "https://tinyurl.com/UK-foods"
 x <- read.csv(url, row.names=1)
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q1: How many rows and columns are in your new data frame named `x`? What R functions could you use to answer this?
 
@@ -50,39 +49,33 @@ ncol(x)
 
 *17 rows (foods) and 4 columns (countries). You can use `dim()`, `nrow()`, or `ncol()` to check this.*
 
----
+------------------------------------------------------------------------
 
 ## Checking Your Data
 
-Notes:
-- Always inspect imported data before doing anything with it
-- `head()` shows the first 6 rows by default
-- **Never leave `View()` uncommented in your Quarto doc** — it will break rendering
+Notes: - Always inspect imported data before doing anything with it - `head()` shows the first 6 rows by default - **Never leave `View()` uncommented in your Quarto doc** — it will break rendering
 
 ```{r}
 head(x)
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q2: Which approach to solving the 'row-names problem' mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
 
 *Using `row.names=1` directly in `read.csv()` is better. The manual `x <- x[,-1]` approach will keep deleting the first column every time you re-run the chunk, which can cause bugs and is harder to catch.*
 
----
+------------------------------------------------------------------------
 
 ## Spotting Major Differences and Trends
 
-Notes:
-- Raw barplots with many categories get cluttered fast — hard to compare countries
-- `beside=TRUE` puts bars side by side; removing it gives a stacked barplot
-- These plots aren't very useful here — this motivates why we need PCA
+Notes: - Raw barplots with many categories get cluttered fast — hard to compare countries - `beside=TRUE` puts bars side by side; removing it gives a stacked barplot - These plots aren't very useful here — this motivates why we need PCA
 
 ```{r}
 barplot(as.matrix(x), beside=TRUE, col=rainbow(nrow(x)))
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q3: Changing what optional argument in the above `barplot()` function results in the following stacked plot?
 
@@ -92,14 +85,11 @@ barplot(as.matrix(x), beside=FALSE, col=rainbow(nrow(x)))
 
 *Changing `beside=TRUE` to `beside=FALSE` produces a stacked barplot.*
 
----
+------------------------------------------------------------------------
 
 ## ggplot Version (tidy data)
 
-Notes:
-- ggplot requires **long format** data — one row per measurement
-- `pivot_longer()` from `tidyr` converts wide to long
-- Wide: 17 rows × 4 columns; Long: 68 rows × 3 columns (17 foods × 4 countries)
+Notes: - ggplot requires **long format** data — one row per measurement - `pivot_longer()` from `tidyr` converts wide to long - Wide: 17 rows × 4 columns; Long: 68 rows × 3 columns (17 foods × 4 countries)
 
 ```{r}
 library(tidyr)
@@ -117,7 +107,7 @@ ggplot(x_long) +
   theme_bw()
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q4: Changing what optional argument in the above `ggplot()` code results in a stacked barplot?
 
@@ -130,22 +120,17 @@ ggplot(x_long) +
 
 *Changing `position = "dodge"` to `position = "stack"` gives a stacked barplot.*
 
----
+------------------------------------------------------------------------
 
 ## Pairs Plots and Heatmaps
 
-Notes:
-- `pairs()` shows every pairwise scatterplot between countries simultaneously
-- Points on the diagonal = that food is consumed in equal amounts in both countries
-- Points off the diagonal = differences in consumption between those two countries
-- Heatmaps use color to represent values — easier to spot patterns at a glance
-- The dendrograms on a heatmap show hierarchical clustering of rows and columns
+Notes: - `pairs()` shows every pairwise scatterplot between countries simultaneously - Points on the diagonal = that food is consumed in equal amounts in both countries - Points off the diagonal = differences in consumption between those two countries - Heatmaps use color to represent values — easier to spot patterns at a glance - The dendrograms on a heatmap show hierarchical clustering of rows and columns
 
 ```{r}
 pairs(x, col=rainbow(nrow(x)), pch=16)
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q5: Can you make sense of the `pairs()` code and figure? What does it mean if a given point lies on the diagonal for a given plot?
 
@@ -156,28 +141,24 @@ library(pheatmap)
 pheatmap(as.matrix(x))
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q6: Based on the pairs and heatmap figures, which countries cluster together and what does this suggest about their food consumption patterns?
 
 *England, Wales, and Scotland all cluster together on the heatmap dendrogram, meaning their food consumption patterns are very similar to each other. N. Ireland clusters separately, driven by notably higher fresh potato and soft drink consumption and lower fresh fruit and alcohol consumption. This pattern is visible in the pairs plot too but much easier to see in the heatmap.*
 
----
+------------------------------------------------------------------------
 
 ## PCA to the Rescue
 
-Notes:
-- `prcomp()` is R's built-in PCA function
-- **Must transpose** with `t()` — `prcomp()` expects samples as rows, variables as columns
-- Here our samples are countries and our variables are foods
-- `scale=TRUE` matters when variables are on different scales — not critical here since all values are in grams
+Notes: - `prcomp()` is R's built-in PCA function - **Must transpose** with `t()` — `prcomp()` expects samples as rows, variables as columns - Here our samples are countries and our variables are foods - `scale=TRUE` matters when variables are on different scales — not critical here since all values are in grams
 
 ```{r}
 pca <- prcomp(t(x))
 summary(pca)
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q7: Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
 
@@ -192,7 +173,7 @@ ggplot(pca$x) +
   theme_bw()
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q8: Customize your plot so that the colors of the country names match the colors in the UK and Ireland map at the start of this document.
 
@@ -209,14 +190,11 @@ ggplot(as.data.frame(pca$x)) +
   theme_bw()
 ```
 
----
+------------------------------------------------------------------------
 
 ## Scree Plot
 
-Notes:
-- Scree plot shows how much variance each PC captures
-- Look for the "elbow" — diminishing returns after that point
-- Here PC1 + PC2 = ~97% of total variance so the 2D plot is an excellent summary of the data
+Notes: - Scree plot shows how much variance each PC captures - Look for the "elbow" — diminishing returns after that point - Here PC1 + PC2 = \~97% of total variance so the 2D plot is an excellent summary of the data
 
 ```{r}
 v <- round(pca$sdev^2 / sum(pca$sdev^2) * 100)
@@ -234,15 +212,11 @@ ggplot(variance_df) +
   theme_bw()
 ```
 
----
+------------------------------------------------------------------------
 
 ## Digging Deeper — Variable Loadings
 
-Notes:
-- Loadings tell you which foods drive each PC
-- High positive loading → that food pushes a sample to the right on PC1 (toward N. Ireland)
-- High negative loading → pushes samples to the left (toward England/Wales/Scotland)
-- This is how you interpret what the PCA is actually capturing biologically
+Notes: - Loadings tell you which foods drive each PC - High positive loading → that food pushes a sample to the right on PC1 (toward N. Ireland) - High negative loading → pushes samples to the left (toward England/Wales/Scotland) - This is how you interpret what the PCA is actually capturing biologically
 
 ```{r}
 ggplot(pca$rotation) +
@@ -254,7 +228,7 @@ ggplot(pca$rotation) +
   theme(axis.text.y = element_text(size = 9))
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q9: Generate a similar 'loadings plot' for PC2. What two food groups feature prominently and what does PC2 mainly tell us about?
 
@@ -270,16 +244,13 @@ ggplot(pca$rotation) +
 
 *Fresh potatoes (positive) and soft drinks (negative) are the two most prominent foods on PC2. PC2 mainly captures the difference between Scotland (high soft drink consumption) and Wales (high fresh potato consumption).*
 
----
+------------------------------------------------------------------------
 
 # Section 2: PCA of RNA-seq Data (Optional)
 
 ## Background
 
-Notes:
-- PCA is extremely common in RNA-seq workflows for QC and exploratory analysis
-- If wt and ko samples don't separate cleanly that would be a red flag
-- `scale=TRUE` is especially important here since gene expression values vary wildly in magnitude across genes
+Notes: - PCA is extremely common in RNA-seq workflows for QC and exploratory analysis - If wt and ko samples don't separate cleanly that would be a red flag - `scale=TRUE` is especially important here since gene expression values vary wildly in magnitude across genes
 
 ```{r}
 url2 <- "https://tinyurl.com/expression-CSV"
@@ -287,7 +258,7 @@ rna.data <- read.csv(url2, row.names=1)
 head(rna.data)
 ```
 
----
+------------------------------------------------------------------------
 
 > ### ❓ Q10: How many genes and samples are in this dataset? How many PCs do you think it will take to have a useful overview?
 
@@ -297,7 +268,7 @@ dim(rna.data)
 
 *100 genes (rows) and 10 samples (columns). Since there are only 2 conditions (wt vs ko), I'd expect just PC1 to capture most of the variation — and it does, at 92.6%.*
 
----
+------------------------------------------------------------------------
 
 ```{r}
 pca <- prcomp(t(rna.data), scale=TRUE)
@@ -357,6 +328,4 @@ top_10_genes <- names(gene_score_ranked[1:10])
 top_10_genes
 ```
 
----
-
-
+------------------------------------------------------------------------
